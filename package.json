@@ -1,0 +1,17 @@
+{
+  "name": "node-web-scrape",
+  "version": "1.0.0",
+  "description": "Subscribe to flats on Wåhlin Fastigheter",
+  "main": "server.js",
+  "author": "Niclas Hansson",
+  "scripts": {
+    "stop": "lsof -i tcp:4000 | awk 'NR!=1 {print $2}' | xargs kill -9 "
+  },
+  "dependencies": {
+    "express": "latest",
+    "request": "latest",
+    "cheerio": "latest",
+    "axios": "latest",
+    "pug": "latest"
+  }
+}

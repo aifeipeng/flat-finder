@@ -1,0 +1,14 @@
+html
+	head
+		title= title
+	body
+		h1= main_header
+		ul 
+			each val in list
+				li
+					h3= val.subject
+					h3 #{'Månadshyra: ' + val.rent}
+					div #{val.day + ' ' + val.timestamp}
+					div #{'Storlek (kvm): ' + val.size}
+					a(href= val.link) Länk till blocket
+					div #{'Beskrivning: ' + val.text}
