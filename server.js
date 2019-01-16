@@ -11,21 +11,24 @@ app.set("view engine", "pug");
 
 var running = false;
 var checkedAppartments = [];
-var result = [];
 var promises = [];
 
 const SETTINGS = {
   url: "https://wahlinfastigheter.se/lediga-objekt/lagenhet/",
-  blacklist: ["Farsta", "Vällingby", "Hässelby", "Barkarby"],
+  blacklist: ["Farsta", "Vällingby", "Hässelby", "Barkarby", "Ursvik"],
   showBlacklisted: true,
   maxPrice: 10500,
   interval: 3 * 60 * 1000
 };
 
+const fromTime = "1215";
+const toTime = "2015";
+const viewedAppartments = [];
+
 const getAvailableFlats = () => {
   return axios.get(SETTINGS.url).then(function(response) {
-    let $ = cheerio.load(response.data);
-    let h3list = $(".subpage-content").find("h3");
+    const $ = cheerio.load(response.data);
+    const h3list = $(".subpage-content").find("h3");
     let noFlats = false;
     for (var i = 0; i < h3list.length; i++) {
       noFlats = !!(
@@ -39,58 +42,26 @@ const getAvailableFlats = () => {
         h3list[i] && h3list[i].children && h3list[i].children[0] && h3list[i].children[0].data
       );
     }
-    return !noFlats;
-    // for (let i = 1; i < list.length - 1; i += 2) {
-    //   let rent = $(list[i])
-    //     .find(".details .monthly_rent")
-    //     .html();
-    //   let day = datetime.split(" ")[0];
-    //
-    //   if (rent !== null) {
-    //     let rentArray = rent.split(" kr");
-    //     let rentValue = rentArray[0].replace(/ /g, "");
-    //     let link = $(list[i])
-    //       .find(".vi-link-overlay")
-    //       .attr("href");
-    //     let sizeValue = size !== null ? size.split(" ")[0].replace(/ /g, "") : 100;
-    //     if (checkedAppartments.indexOf(link) > -1) {
-    //       // Already seen
-    //     } else if (helpFuncs.doesAppartmentPassFilters(rentValue, sizeValue, SETTINGS.minPrice, SETTINGS.maxPrice)) {
-    //       let promise = axios.get(link).then(function(unitRes) {
-    //         let apartment = getAppartment(unitRes, rentValue, link, sizeValue, day);
-    //         if (SETTINGS.showBlacklisted || !apartment.isBlacklisted) result.push(apartment);
-    //         checkedAppartments.push(link);
-    //       });
-    //       promises.push(promise);
-    //     }
-    //   }
-    // }
-  });
-};
+    if (noFlats) return { available: false };
 
-// const getAppartment = function(response, rentValue, link, size, day) {
-//   let $ = cheerio.load(response.data);
-//   let subject = $("h2")
-//     .html()
-//     .trim();
-//   let appartmentText = $(".object-text").html();
-//   let isBlacklisted = helpFuncs.checkBlacklist(subject + appartmentText, SETTINGS.blacklist);
-//   return {
-//     rent: rentValue,
-//     subject: subject,
-//     text: appartmentText,
-//     link: link,
-//     size: size,
-//     day: day,
-//     isBlacklisted: isBlacklisted
-//   };
-// };
+    const subpageContent = $(".fastighet");
+    const appartments = [];
+    subpageContent.map(function(i, el) {
+      if (i !== 0) {
+        const appartmentInfo = $(this).find(".fastighetsinfo")[0].children[1].children[1]
+          .children[0].data;
+        console.log({ appartmentInfo });
 
-const fromTime = "1215";
-const toTime = "1415";
+        const link = $(this).find(".readmore")[0].children[1].attribs.href;
+        console.log({ link });
+
+        appartments.push({ info: appartmentInfo, link });
+      }
+    });
+    console.log({ appartments });
+    return { available: true, appartments };
 
 const findFlats = function() {
-  result = [];
   console.log("GET APARTMENTS... ");
 
   const now = new Date();
@@ -100,59 +71,77 @@ const findFlats = function() {
 
   timeToHunt &&
     getAvailableFlats()
-      .then(function(hasAppartments) {
-        console.log("There are appartments available: ", hasAppartments);
-        if (hasAppartments) {
-          const appartment = {
-            isBlacklisted: false,
-            rent: 1000,
-            size: 33,
-            subject: "Lgh!",
-            text: "There is an appartment: https://wahlinfastigheter.se/lediga-objekt/lagenhet/",
-            title: "Wåhlin Lediga Lägenheter",
-            title_link: "https://wahlinfastigheter.se/lediga-objekt/lagenhet/"
-          };
-          const slackText =
-            "*" +
-            appartment.subject +
-            "*" +
-            "\n" +
-            "Hyra: " +
-            appartment.rent +
-            "\n" +
-            "Storlek: " +
-            appartment.size +
-            " kvm" +
-            "\n" +
-            "Upplagd: " +
-            appartment.day;
-          const slackAttachments = [
-            {
-              text: appartment.text,
-              color: appartment.isBlacklisted ? "#FF3344" : "#3AA3E3",
-              title: "Länk",
-              title_link: appartment.link
+      .then(function(res) {
+        if (res.available) {
+          const { appartments } = res;
+          appartments.forEach(flat => {
+            const id = `${flat.link} - ${flat.info}`;
+            if (!viewedAppartments.includes(id)) {
+                viewedAppartments.push(id);
+                const appartment = {
+                    isBlacklisted: false,
+                    link: `https://wahlinfastigheter.se/lediga-objekt/lagenhet/${flat.link}`,
+                    subject: "Lägenhet ledig",
+                    text: `https://wahlinfastigheter.se/lediga-objekt/lagenhet/${flat.link}`,
+                    title: flat.info
+                };
+                const slackText = appartment.title;
+                const slackAttachments = [
+                    {
+                        color: appartment.isBlacklisted ? "#FF3344" : "#3AA3E3",
+                        text: appartment.text,
+                        title: appartment.title,
+                        title_link: appartment.link
+                    }
+                ];
+
+                axios
+                .post(
+                    "https://hooks.slack.com/services/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",
+                    {
+                        text: slackText,
+                        attachments: slackAttachments
+                    }
+                )
+                .then(function(response) {
+                    console.log("Slack-meddelande skickat");
+                });
             }
-          ];
-          const slackInput = {
-            text: slackText,
-            attachments: slackAttachments,
-            mrkdwn: true
-          };
-          axios
-            .post(
-              "https://hooks.slack.com/services/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",
-              slackInput
-            )
-            .then(function(response) {
-              console.log("Slack-meddelande skickat");
-            });
+          });
         }
       })
+      .then(() => console.log("DONE."))
       .catch(function(error) {
         console.log("\n\nERROR", error + "\n\n\n");
+
+        const appartment = {
+          isBlacklisted: true,
+          subject: "ERROR",
+          text: "ERROR",
+          title: "ERROR"
+        };
+        const slackText = "*" + appartment.subject + "*";
+        const slackAttachments = [
+          {
+            text: appartment.text,
+            color: appartment.isBlacklisted ? "#FF3344" : "#3AA3E3",
+            title: "Länk",
+            title_link: appartment.link
+          }
+        ];
+        const slackInput = {
+          text: slackText,
+          attachments: slackAttachments
+        };
+        axios
+          .post(
+            "https://hooks.slack.com/services/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",
+            slackInput
+          )
+          .then(function(response) {
+            console.log("Slack-meddelande skickat");
+          });
       });
-  console.log("DONE.");
 };
 
 findFlats();
