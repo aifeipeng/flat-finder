@@ -63,8 +63,22 @@ const getAvailableFlats = () => {
   })
 }
 
-const findFlats = function() {
+const findFlats = function(firstTime) {
   console.log('GET APARTMENTS... ')
+
+  if (firstTime) {
+    const slackInput = {
+      text: 'Flat Finder is up an running!!'
+    }
+    axios
+      .post(
+        'https://hooks.slack.com/services/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',
+        slackInput
+      )
+      .then(function(response) {
+        console.log('Slack-meddelande skickat')
+      })
+  }
 
   const now = new Date()
   const nowMinutes = now.getMinutes() > 9 ? now.getMinutes() : `0${now.getMinutes()}`
@@ -148,8 +162,13 @@ const findFlats = function() {
       })
 }
 
-findFlats()
+findFlats(true)
 setInterval(findFlats, SETTINGS.interval)
 
-app.get('/', function(req, res) {})
-app.listen(4000)
+app.get('/', (req, res) => {
+  res.send('Hellow world')
+})
+
+app.listen(8080, () => {
+  console.log('Flat finding on 8080')
+})
