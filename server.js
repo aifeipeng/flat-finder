@@ -21,7 +21,7 @@ const SETTINGS = {
   interval: 1 * 60 * 1000
 }
 
-const fromTime = '1230'
+const fromTime = '1030'
 const toTime = '1500'
 const viewedAppartments = []
 
@@ -64,7 +64,7 @@ const getAvailableFlats = () => {
 }
 
 const findFlats = function(firstTime) {
-  console.log('GET APARTMENTS... ')
+  console.log('LOOP... ')
 
   if (firstTime) {
     const slackInput = {
@@ -84,7 +84,11 @@ const findFlats = function(firstTime) {
   const nowMinutes = now.getMinutes() > 9 ? now.getMinutes() : `0${now.getMinutes()}`
   const nowTime = `${now.getHours()}${nowMinutes}`
   let timeToHunt = nowTime >= fromTime && nowTime <= toTime
-
+  
+  if (timeToHunt) {
+    console.log('GETTING APPARTMENTS... ')
+  }
+  
   timeToHunt &&
     getAvailableFlats()
       .then(function(res) {
