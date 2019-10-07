@@ -25,6 +25,22 @@ const fromTime = '1030'
 const toTime = '1500'
 const viewedAppartments = []
 
+var intervalID = setInterval(myCallback, 3000)
+
+function myCallback() {
+  const slackInput = {
+    text: 'Flat Finder is up an running!!'
+  }
+  axios
+  .post(
+    'https://hooks.slack.com/services/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',
+    slackInput
+  )
+  .then(function(response) {
+    console.log('Test-meddelande skickat')
+  })
+}
+
 const getAvailableFlats = () => {
   return axios.get(SETTINGS.url).then(function(response) {
     const $ = cheerio.load(response.data)
@@ -72,7 +88,7 @@ const findFlats = function(firstTime) {
     }
     axios
       .post(
-        'https://hooks.slack.com/services/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',
+        'https://hooks.slack.com/services/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',
         slackInput
       )
       .then(function(response) {
@@ -119,7 +135,7 @@ const findFlats = function(firstTime) {
 
               axios
                 .post(
-                  'https://hooks.slack.com/services/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',
+                  'https://hooks.slack.com/services/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',
                   {
                     text: slackText,
                     attachments: slackAttachments
@@ -157,7 +173,7 @@ const findFlats = function(firstTime) {
         }
         axios
           .post(
-            'https://hooks.slack.com/services/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',
+            'https://hooks.slack.com/services/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',
             slackInput
           )
           .then(function(response) {
