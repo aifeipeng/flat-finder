@@ -33,7 +33,7 @@ function myCallback() {
   }
   axios
   .post(
-    'https://hooks.slack.com/services/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',
+    'https://hooks.slack.com/services/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',
     slackInput
   )
   .then(function(response) {
@@ -88,7 +88,7 @@ const findFlats = function(firstTime) {
     }
     axios
       .post(
-        'https://hooks.slack.com/services/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',
+        'https://hooks.slack.com/services/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',
         slackInput
       )
       .then(function(response) {
@@ -135,7 +135,7 @@ const findFlats = function(firstTime) {
 
               axios
                 .post(
-                  'https://hooks.slack.com/services/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',
+                  'https://hooks.slack.com/services/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',
                   {
                     text: slackText,
                     attachments: slackAttachments
@@ -173,7 +173,7 @@ const findFlats = function(firstTime) {
         }
         axios
           .post(
-            'https://hooks.slack.com/services/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',
+            'https://hooks.slack.com/services/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',
             slackInput
           )
           .then(function(response) {
